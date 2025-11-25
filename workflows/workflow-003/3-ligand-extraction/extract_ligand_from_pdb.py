@@ -6,19 +6,20 @@ Extract the ligand from a PDB file and save it as ligand_name.sdf
 """
 
 import os
-
+import requests
 from Bio.PDB import PDBIO, PDBParser, Select
 from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit.Chem.MolStandardize import rdMolStandardize
+import MDAnalysis as mda
 
+#class LigandSelect(Select):
+    #"""Select only residues"""
 
-class LigandSelect(Select):
-    """Select only residues"""
-
-    def accept_residue(self, residue):
-        ligand_name = os.getenv("PARAM_LIGAND_NAME")
-        return residue.get_resname() == ligand_name
+   # def accept_residue(self, residue):
+        #ligand_name = os.getenv("PARAM_LIGAND_NAME")
+        #return residue.get_resname() == ligand_name
         # return residue.get_resname() == "2TK"
-
 
 def extract_ligand_from_pdb(pdb_path, ligand_name):
     """Extract the ligand from a PDB file and save as SDF (keeping original conformation)"""
@@ -30,29 +31,85 @@ def extract_ligand_from_pdb(pdb_path, ligand_name):
     structure = parser.get_structure("protein", pdb_path)
 
     # Save only the ligand residue to a temporary PDB
-    temp_pdb = f"{ligand_name}_temp.pdb"
-    io = PDBIO()
-    io.set_structure(structure)
-    io.save(temp_pdb, LigandSelect())
+    #temp_pdb = f"{ligand_name}_temp.pdb"
+    #io = PDBIO()
+    #io.set_structure(structure)
+    #io.save(temp_pdb, LigandSelect())
 
     # Read molecule from the PDB without generating new coordinates
-    mol = Chem.MolFromPDBFile(temp_pdb, removeHs=False)
-    if mol is None:
-        print(f"RDKit could not parse the extracted {ligand_name} PDB.")
-        return
+    #mol = Chem.MolFromPDBFile(temp_pdb, removeHs=False)
+    #if mol is None:
+        #print(f"RDKit could not parse the extracted {ligand_name} PDB.")
+        #return
 
+    # Load the original PDB
+    u = mda.Universe(f"{pdb_id}_A_NAD.pdb")
+    single_ligand = u.select_atoms(f"resname {ligand_name}")
+    single_ligand.write(f"{ligand_name}_fromPDB.pdb")
+    print(f"Ligand {ligand_name} extracted from original PDB!")
+    
     # Save to SDF (preserves PDB coordinates)
-    writer = Chem.SDWriter(f"{ligand_name}.sdf")
-    writer.write(mol)
-    writer.close()
+    #writer = Chem.SDWriter(f"{ligand_name}.sdf")
+    #writer.write(mol)
+    #writer.close()
 
-    os.remove(temp_pdb)
+    #os.remove(temp_pdb)
     print(f"Extracted {ligand_name} ligand and saved as: {ligand_name}.sdf")
+    
+def fix_and_align():
+    
+    print("Fixing and correcting the pose of extracted ligand...")
+    # Load and remove the hydrogens that we can't map anyways yet.
+    ideal_mol = Chem.MolFromMolFile(f"{ligand_name}_ideal.sdf", removeHs=True)
+    pose_mol = Chem.MolFromPDBFile(f"{ligand_name}_fromPDB.pdb", removeHs=True)
+    
+    # Disconnect any organometal
+    rdMolStandardize.DisconnectOrganometallicsInPlace(pose_mol)
 
+    # Remove disconnected fragments
+    fragmenter = rdMolStandardize.FragmentRemover()
+    pose_mol_f = fragmenter.remove(pose_mol)
+
+    # Choose largest fragment
+    chooser = rdMolStandardize.LargestFragmentChooser()
+    pose_mol_lf = chooser.choose(pose_mol_f)
+
+    # Assign bond orders from the template to the pose molecule
+    corrected_pose = AllChem.AssignBondOrdersFromTemplate(ideal_mol, pose_mol_lf)
+
+    # Add hydrogens
+    corrected_pose_with_H = Chem.AddHs(corrected_pose, addCoords=True)
+
+    # Sanity to check to make sure the molecule is right (check smiles of both)
+    #assert Chem.MolToSmiles(corrected_pose) == Chem.MolToSmiles(ideal_mol)
+
+    # Save the corrected pose to an SDF file
+    ligand_corrected_pose_file = f"{ligand_name}_corrected_pose.sdf"
+    writer = Chem.SDWriter(ligand_corrected_pose_file)
+    writer.write(corrected_pose_with_H)
+    writer.close()
+    print("Extracted ligand fixed!")
+    #os.remove(temp_pdb)
+
+def download_ideal_ligand():
+
+    ideal_ligand_filename = f"{ligand_name}_ideal.sdf"
+    print(f"Downloading ligand {ligand_name}...")
+    ligand_url = f"https://files.rcsb.org/ligands/download/{ideal_ligand_filename}"
+    ligand_request = requests.get(ligand_url)
+    ligand_request.raise_for_status() # Check for errors
+
+    ideal_filepath = f"{ideal_ligand_filename}"
+
+    with open(ideal_filepath, "w") as f:
+        f.write(ligand_request.text)
+    print(f"Saved ligand to {ideal_filepath}")
 
 if __name__ == "__main__":
     # pdb_id = "4OHU"
-    pdb_id = os.getenv("PARAM_PDB_ID")
+    #pdb_id = os.getenv("PARAM_PDB_ID")
     # ligand_name = "2TK"
-    ligand_name = os.getenv("PARAM_LIGAND_NAME")
-    extract_ligand_from_pdb(f"{pdb_id}_A_NAD.pdb", ligand_name)
+    #ligand_name = os.getenv("PARAM_LIGAND_NAME")
+    extract_ligand_from_pdb(f"{pdb_id}_A_NAD_fixed.pdb", ligand_name)
+    download_ideal_ligand()
+    fix_and_align()
