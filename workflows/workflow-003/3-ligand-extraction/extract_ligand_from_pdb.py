@@ -1,35 +1,58 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Extract the ligand from a PDB file and save it as ligand_name.sdf
-(Preserves original coordinates from the PDB)
-"""
-
 import os
 import requests
 from Bio.PDB import PDBIO, PDBParser, Select
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from rdkit.Chem import rdmolops
 from rdkit.Chem.MolStandardize import rdMolStandardize
-import MDAnalysis as mda
 
-def extract_ligand_from_pdb(pdb_path, ligand_name):
-    """Extract the ligand from a PDB file and save as SDF (keeping original conformation)"""
-    if not os.path.exists(pdb_path):
-        print(f"File not found: {pdb_path}")
-        return
 
-    parser = PDBParser(QUIET=True)
-    structure = parser.get_structure("protein", pdb_path)
-
-    # Load the original PDB
-    u = mda.Universe(f"{pdb_id}_A_NAD.pdb")
-    single_ligand = u.select_atoms(f"resname {ligand_name}")
-    single_ligand.write(f"{ligand_name}_fromPDB.pdb")
-    print(f"Ligand {ligand_name} extracted from original PDB!")
-
-    print(f"Extracted {ligand_name} ligand and saved as: {ligand_name}.sdf")
+def extract_ligand_from_pdb(pdb_path, ligand_resname, out_pdb):
+    """
+    Extracts the 2TK ligand from a PDB file (e.g., 4OHU) and saves it as a PDB file,
+    ensuring aromaticity is preserved.
+    """
     
+    # Load the PDB file (keep hydrogens and skip sanitization during the initial load)
+    mol = Chem.MolFromPDBFile(pdb_path, removeHs=False, sanitize=False)
+    if mol is None:
+        raise ValueError("Could not load PDB file.")
+    
+    # Sanitize the molecule to ensure proper aromaticity and bond assignments
+    Chem.SanitizeMol(mol)
+
+    # Manually assign aromaticity to the molecule (this step is critical)
+    rdmolops.AssignStereochemistry(mol, force=True, cleanIt=True)  # Assigns stereochemistry and aromaticity
+
+    # Split the PDB into fragments (proteins, ligands, water, etc.)
+    frags = Chem.GetMolFrags(mol, asMols=True, sanitizeFrags=False)
+
+    ligand_frags = []
+
+    # Iterate over fragments and extract the 2TK ligand
+    for frag in frags:
+        resnames = set()
+        for atom in frag.GetAtoms():
+            info = atom.GetPDBResidueInfo()
+            if info:
+                resnames.add(info.GetResidueName().strip())
+
+        # Check if this fragment corresponds to the 2TK ligand (by residue name)
+        if ligand_resname.upper() in resnames:
+            ligand_frags.append(frag)
+
+    if not ligand_frags:
+        raise ValueError(f"No ligand with residue name {ligand_name} found.")
+
+    # Write the extracted ligand to a PDB file
+    writer = Chem.PDBWriter(out_pdb)
+    for lig in ligand_frags:
+        writer.write(lig)
+    writer.close()
+
+    print(f"Saved 2TK ligand to {out_pdb}")
+    return ligand_frags
+
 def fix_and_align():
     
     print("Fixing and correcting the pose of extracted ligand...")
@@ -59,7 +82,7 @@ def fix_and_align():
     writer = Chem.SDWriter(ligand_corrected_pose_file)
     writer.write(corrected_pose_with_H)
     writer.close()
-    print("Extracted ligand fixed!")
+    print("Extracted ligand fixed and aligned!")
 
 def download_ideal_ligand():
 
@@ -75,11 +98,14 @@ def download_ideal_ligand():
         f.write(ligand_request.text)
     print(f"Saved ligand to {ideal_filepath}")
 
+# Example usage: Extracting 2TK from 4OHU PDB while preserving aromaticity and saving as PDB
+#extract_ligand_from_pdb(f"{pdb_id}.pdb", ligand_resname=ligand_name, out_pdb=f"{ligand_name}_fromPDB.pdb")
+
 if __name__ == "__main__":
     # pdb_id = "4OHU"
     pdb_id = os.getenv("PARAM_PDB_ID")
     # ligand_name = "2TK"
     ligand_name = os.getenv("PARAM_LIGAND_NAME")
-    extract_ligand_from_pdb(f"{pdb_id}_A_NAD.pdb", ligand_name)
+    extract_ligand_from_pdb(f"{pdb_id}.pdb", ligand_name, out_pdb=f"{ligand_name}_fromPDB.pdb")
     download_ideal_ligand()
     fix_and_align()
