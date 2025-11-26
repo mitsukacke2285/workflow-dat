@@ -77,9 +77,9 @@ def download_ideal_ligand():
 
 if __name__ == "__main__":
     # pdb_id = "4OHU"
-    #pdb_id = os.getenv("PARAM_PDB_ID")
+    pdb_id = os.getenv("PARAM_PDB_ID")
     # ligand_name = "2TK"
-    #ligand_name = os.getenv("PARAM_LIGAND_NAME")
+    ligand_name = os.getenv("PARAM_LIGAND_NAME")
     extract_ligand_from_pdb(f"{pdb_id}_A_NAD.pdb", ligand_name)
     download_ideal_ligand()
     fix_and_align()
