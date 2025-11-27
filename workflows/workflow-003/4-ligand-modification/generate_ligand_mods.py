@@ -6,7 +6,8 @@ from rdkit.Chem.Draw import rdMolDraw2D
 
 
 def generate_variants(smiles):
-    """Generate functional group variants of a molecule."""
+    """Generate functional group variants of a molecule.
+       Skips substitutions where the functional group is not present."""
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         raise ValueError("Invalid SMILES")
@@ -27,17 +28,27 @@ def generate_variants(smiles):
     for name, (pattern, replacement) in substitutions.items():
         patt = Chem.MolFromSmarts(pattern)
         repl = Chem.MolFromSmiles(replacement)
-        if patt and repl:
-            replaced = Chem.ReplaceSubstructs(mol, patt, repl, replaceAll=True)
-            variants = [Chem.MolToSmiles(r, canonical=True) for r in replaced]
-            results[name] = list(set(variants))
-    return results
 
+        if not patt or not repl:
+            continue
+
+        # Skip if functional group is not present
+        if not mol.HasSubstructMatch(patt):
+            continue
+
+        replaced = Chem.ReplaceSubstructs(mol, patt, repl, replaceAll=True)
+        variants = [Chem.MolToSmiles(r, canonical=True) for r in replaced]
+
+        if variants:
+            results[name] = list(set(variants))
+
+    return results
 
 def save_variant_figure(base_smiles, variants, filename="variants.svg"):
     """Save all variant molecules as an SVG figure."""
     mols = [Chem.MolFromSmiles(base_smiles)]
     labels = ["original"]
+
     for name, smiles_list in variants.items():
         for s in smiles_list:
             mols.append(Chem.MolFromSmiles(s))
@@ -80,7 +91,7 @@ def generate_3d_structures(base_smiles, variants, out_dir="ligand_library"):
     for name, smiles_list in variants.items():
         for s in smiles_list:
             if s == base_smiles_canonical:
-                continue  # skip identical
+                continue  # skip identical original structure
             mol = Chem.MolFromSmiles(s)
             mol = Chem.AddHs(mol)
             success = AllChem.EmbedMolecule(mol, AllChem.ETKDGv3())
@@ -96,29 +107,28 @@ def generate_3d_structures(base_smiles, variants, out_dir="ligand_library"):
                 print(f"Failed to embed: {name} ({s})")
 
     if not generated:
-        print("\nℹNo new variants required 3D generation.")
+        print("\nℹ No new variants required 3D generation.")
     else:
         print(f"\nGenerated {len(generated)} 3D structure(s) in '{out_dir}'.")
 
 
 def sdf_to_smiles(sdf_filepath):
     smiles_list = []
-    # Using a context manager is a good practice for file handling
     with Chem.SDMolSupplier(sdf_filepath) as supplier:
         for mol in supplier:
             if mol is not None:
-                # Get the canonical SMILES
-                smiles = Chem.MolToSmiles(mol, canonical=True)
-                smiles_list.append(smiles)
+                smiles_list.append(Chem.MolToSmiles(mol, canonical=True))
     return smiles_list
 
 
-# Example molecule (2TK)
-# base_smiles = "CCCCCCc1ccc(Oc2ccccc2Br)c(O)c1"
+# ---- Example usage ----
 
-# ligand_name = "2TK"
-ligand_name = os.getenv("PARAM_LIGAND_NAME")
+# base_smiles = "CCCCCCc1ccc(Oc2ccccc2Br)c(O)c1"
+# base_smiles = "c1ccccc1"
+# ligand_name = os.getenv("PARAM_LIGAND_NAME")
+
 smiles_output = sdf_to_smiles(f"{ligand_name}_corrected_pose.sdf")
+
 for s in smiles_output:
     print(s)
 
@@ -132,6 +142,5 @@ if len(smiles_output) > 0:
         for s in smiles_list:
             print("  ", s)
 
-    # Save 2D figure and 3D models
     save_variant_figure(base_smiles, variants, "variants.svg")
     generate_3d_structures(base_smiles, variants)
