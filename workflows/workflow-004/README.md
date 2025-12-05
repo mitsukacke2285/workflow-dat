@@ -11,25 +11,29 @@ The target system modeled here is based on **PDB ID: 4OHU**, which includes **ch
 
 ## Pipeline Structure
 
-### Step 1: Protein Preparation (`protein_preparation.py`)
-Prepares the **target protein** for docking.
-
-**Process:**
+### Step 1: Download PDB structure (`download_pdb.py`)
 1. **Downloads** the PDB file (`4OHU.pdb`) from RCSB.
-2. **Extracts chain A** removing all non-protein heteroatoms (including ligands).
-3. **Computes binding site center** using 2TK’s coordinates (for grid setup).
-4. **Generates docking configuration** (`config.txt`) with center and grid size.
-5. **Fixes structural issues** using **PDBFixer**, adds hydrogens.
-6. **Reattaches NAD** if removed by PDBFixer.
-7. **Optionally assigns AMBER charges** using PDB2PQR.
-8. Copies final receptor to the `results/` directory.
+
+**Key Outputs:**
+4OHU.pdb
+
+**Usage Example:**
+```bash
+python3 download_pdb.py
+```
+
+### Step 2: Protein Preparation (`protein_preparation.py`)
+Prepares the **target protein** for docking.
+**Process:**
+1. **Selects and extracts chain A** in 4OHU.pdb removing all non-protein heteroatoms (including ligands).
+2. **Fixes structural issues** using **PDBFixer**, adds hydrogens and minimizes energy 
+8. Copies final receptor to the `protein_files/` directory.
 
 **Key Outputs:**
 ```
-4OHU_A_NAD_fixed_with_NAD.pdb
-4OHU_A_NAD_fixed_with_NAD.pqr (optional)
-config.txt
-results/4OHU_A_NAD_fixed_with_NAD.pdb
+4OHU_A.pdb
+4OHU_A_fixed.pdb
+protein_files/4OHU_A.pdbqt
 ```
 
 **Usage Example:**
@@ -37,23 +41,22 @@ results/4OHU_A_NAD_fixed_with_NAD.pdb
 python3 protein_preparation.py
 ```
 
-
-
-
-
-### Step 2: Ligand Extraction
+### Step 3: Ligand Extraction
 Extracts ligand coordinates from the downloaded PDB file.
 
 **Process:**
-- Reads the `4OHU.pdb` structure.
-- Screens the protein for all co-crystallized ligands for the user to select; saves it as ligand_id.
-- Based on user selection, isolates the ligand_id from protein.
-- Exports ligand as `{ligand_id}.sdf` (preserving its 3D coordinates).
-- Downloads an ideal ligand from RCSB (as {ligand_id}_ideal.sdf).
+1. Reads the `4OHU.pdb` structure.
+2. Screens the protein for all co-crystallized ligands for the user to select; saves it as ligand_id.
+3. BIsolates selcted ligand from  PDB and saves as ligand_id variable.
+4. Exports ligand_id as `{ligand_id}.sdf` (preserving its 3D coordinates).
+5. Downloads an ideal ligand from RCSB (as {ligand_id}_ideal.sdf).
+6. Partially fixes and aligns coordinates with {ligand_id}_ideal.sdf and rearomatize {ligand_id}.sdf and saves it as {ligand_id}_corrected_pose.sdf
 
-**Output:**
+**Key Outputs:**
 ```
 {ligand_id}.sdf
+{ligand_id}_ideal.sdf
+{ligand_id}_corrected_pose.sdf
 ```
 
 **Usage Example:**
@@ -63,11 +66,8 @@ python3 ligand_extraction_and_preparation.py
 
 ---
 
-
----
-
-### Step 4: In-Silico Screening (`in_silico_screening.py`)
-Performs docking of each ligand against the prepared receptor using **Smina**.
+### Step 4: In-Silico Screening (`in_silico_screening_and_reporting.py`)
+Performs docking of each ligand against the prepared receptor using **Gnina**.
 
 **Process:**
 1. Verifies Smina installation.
@@ -78,9 +78,8 @@ Performs docking of each ligand against the prepared receptor using **Smina**.
 
 **Configuration:**
 - Scoring: Vina
-- Number of modes: 1
-- Exhaustiveness: 8 (from config)
-- Energy range: 4 kcal/mol
+- Number of modes: 4
+- Exhaustiveness: 8-80
 
 **Outputs:**
 ```
@@ -208,3 +207,4 @@ Installed inside the Docker environment:
 - **AutoDock Vina:** Trott & Olson, *J. Comput. Chem.* 31, 455–461 (2010).  
 - **PDBFixer:** https://github.com/openmm/pdbfixer  
 - **PDB2PQR:** Dolinsky et al., *Nucleic Acids Res.*, 32, W665–W667 (2004).  
+
