@@ -229,11 +229,11 @@ os.makedirs("molecular_docking/docking_results", exist_ok=True)
 
 selection = os.getenv("PARAM_SELECTION")
 
-inp = [2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80]
+inp = [8, 16, 24, 32, 40, 48, 56, 64, 72, 80]
 
 #ex = int(input("\n Define exhaustiveness (8, 16, 24, 32, 40, 48, 56, 64): "))
-#ex = os.getenv("PARAM_EX")
-ex = int(2)
+ex = os.getenv("PARAM_EX")
+#ex = int(2)
 if ex in inp:
     print(f"You have selected  exhaustiveness level {ex}")
     #ask_gpu = os.getenv("PARAM_ASK_GPU")
