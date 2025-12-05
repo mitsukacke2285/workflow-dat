@@ -265,8 +265,8 @@ if ex in inp:
     if __name__ == "__main__":
         #pdb_id = "4OHU"
         pdb_id = os.getenv("PARAM_PDB_ID")
-        #ligand_name = "2TK"
-        ligand_name = os.getenv("PARAM_LIGAND_NAME")
+        #ligand_id = "2TK"
+        ligand_id = os.getenv("PARAM_LIGAND_ID")
 
         docking_main()
 else:
