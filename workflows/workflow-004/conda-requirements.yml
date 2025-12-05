@@ -1,0 +1,19 @@
+name: myenv
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - requests
+  - biopython        # provides Bio.PDB
+  - pdbfixer
+  - openmm
+  - mdanalysis
+  - rdkit
+  - pip              # keep pip enabled for extra packages
+  - pip:
+    - molscrub
+    - useful-rdkit-utils
