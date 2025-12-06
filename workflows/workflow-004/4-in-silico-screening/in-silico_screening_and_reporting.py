@@ -59,16 +59,17 @@ docking_results = ""
 # ------------------------------------------------------------------------------
 
 def single_ligand_docking():
+    receptor = f"{pdb_id}_A.pdbqt"
+    ligand = f"{ligand_id}.sdf"
+    grid_box = f"{ligand_id}_corrected_pose.sdf"
+    output_file = f"{docking_results_directory}/{ligand_id}_docked_{pdb_id}.sdf"
     subprocess.run([
     #"./gnina",
     "gnina",
-    #"-r", f"{protein_directory}/{pdb_id}_A.pdbqt",
-    "-r", f"{pdb_id}_A.pdbqt",
-    #"-l", f"{ligand_directory}/{ligand_id}.sdf",
-    "-l", f"{ligand_id}.sdf",
-    #"--autobox_ligand", f"{ligand_directory}/{ligand_id}_corrected_pose.sdf",
-    "--autobox_ligand", f"{ligand_id}_corrected_pose.sdf",
-    "-o", f"{docking_results_directory}/{ligand_id}_docked_{pdb_id}.sdf",
+    "-r", receptor,
+    "-l", ligand,
+    "--autobox_ligand", grid_box,
+    "-o", output_file,
     "--seed", "0",
     "--exhaustiveness", f"{ex}",
     *gpu_flag,  # expands to nothing or ["--no_gpu"]
@@ -76,16 +77,17 @@ def single_ligand_docking():
     ])
 
 def batch_docking():
+    receptor = f"{pdb_id}_A.pdbqt"
+    ligand = f"ligands_to_dock.sdf"
+    grid_box = f"{ligand_id}_corrected_pose.sdf"
+    output_file = f"{docking_results_directory}/multiple_ligands_docked_{pdb_id}.sdf"
     subprocess.run([
     #"./gnina",
     "gnina",
-    #"-r", f"{protein_directory}/{pdb_id}_A.pdbqt",
-    "-r", f"{pdb_id}_A.pdbqt",
-    #"-l", f"{ligand_directory}/ligands_to_dock.sdf",
-    "-l", f"ligands_to_dock.sdf",
-    #"--autobox_ligand", f"{ligand_directory}/{ligand_id}_corrected_pose.sdf",
-    "--autobox_ligand", f"{ligand_id}_corrected_pose.sdf",
-    "-o", f"{docking_results_directory}/multiple_ligands_docked_{pdb_id}.sdf",
+    "-r", receptor,
+    "-l", ligand,
+    "--autobox_ligand", grid_box,
+    "-o", output_file,
     "--seed", "0",
     "--exhaustiveness", f"{ex}",
     *gpu_flag,  # expands to nothing or ["--no_gpu"]
@@ -93,36 +95,39 @@ def batch_docking():
     ])
 
 def flexible_docking():
+    receptor = f"{pdb_id}_A.pdbqt"
+    ligand = f"ligands_to_dock.sdf"
+    grid_box = f"{ligand_id}_corrected_pose.sdf"
+    flexdist_ligand = f"{ligand_id}_corrected_pose.sdf"
+    output_file = f"{docking_results_directory}/{ligand_id}_flex.sdf"
     subprocess.run([
     #"./gnina",
     "gnina",
-    #"-r", f"{protein_directory}/{pdb_id}_A.pdbqt",
-    "-r", f"{pdb_id}_A.pdbqt",
-    #"-l", f"{ligand_directory}/{ligand_id}.sdf",
-    "-l", f"{ligand_id}.sdf",
-    #"--autobox_ligand", f"{ligand_directory}/{ligand_id}_corrected_pose.sdf",
-    "--autobox_ligand", f"{ligand_id}_corrected_pose.sdf",
-    "-o", f"{docking_results_directory}/{ligand_id}_flex.sdf",
-    #"--flexdist_ligand", f"{ligand_directory}/{ligand_id}_corrected_pose.sdf",
-    "--flexdist_ligand", f"{ligand_id}_corrected_pose.sdf",
+    "-r", receptor,
+    "-l", ligand,
+    "--autobox_ligand", grid_box,
+    "-o", output_file,
+    "--flexdist_ligand", flexdist_ligand,
     "--flexdist", "3.59",
     "--seed", "0",
-    "--exhaustiveness 64"
+    "--exhaustiveness 64",
     *gpu_flag,  # expands to nothing or ["--no_gpu"]
     *cnn_flag  # expands to nothing or ["--cnn_scoring=none"]
     ])
 
 def unknown_site_docking():
+    receptor = f"{pdb_id}_A.pdbqt"
+    ligand = f"ligands_to_dock.sdf"
+    grid_box = f"{pdb_id}_A.pdbqt"
+    flexdist_ligand = f"{ligand_id}_corrected_pose.sdf"
+    output_file = f"{docking_results_directory}/{ligand_id}_docked_whole_{pdb_id}.sdf"
     subprocess.run([
     #"./gnina",
     "gnina",
-    #"-r", f"{protein_directory}/{pdb_id}_A.pdbqt",
-    "-r", f"{pdb_id}_A.pdbqt",
-    #"-l", f"{ligand_directory}/{ligand_id}.sdf",
-    "-l", f"{ligand_id}.sdf",
-    #"--autobox_ligand", f"{protein_directory}/{pdb_id}_A.pdbqt",
-    "--autobox_ligand", f"{pdb_id}_A.pdbqt",
-    "-o", f"{docking_results_directory}/{ligand_id}_docked_whole_{pdb_id}.sdf",
+    "-r", receptor,
+    "-l", ligand,
+    "--autobox_ligand", grid_box,
+    "-o", output_file,
     "--seed", "0",
     "--exhaustiveness", f"{ex}",
     *gpu_flag,  # expands to nothing or ["--no_gpu"]
