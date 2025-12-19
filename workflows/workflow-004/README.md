@@ -12,7 +12,7 @@ The target system modeled here is based on **PDB ID: 4OHU**, which includes **ch
 ## Pipeline Structure
 
 ### Step 1: Download PDB structure (`download_pdb.py`)
-1. **Downloads** the PDB file (`4OHU.pdb`) from RCSB.
+1. Downloads the PDB file (`4OHU.pdb`) from RCSB.
 
 **Key Outputs:**
 4OHU.pdb
@@ -23,11 +23,11 @@ python3 download_pdb.py
 ```
 
 ### Step 2: Protein Preparation (`protein_preparation.py`)
-Prepares the **target protein** for docking.
+Prepares the target protein for docking.
 **Process:**
-1. **Selects and extracts chain A** in 4OHU.pdb removing all non-protein heteroatoms (including ligands).
-2. **Fixes structural issues** using **PDBFixer**, adds hydrogens and minimizes energy 
-8. Copies final receptor to the `protein_files/` directory.
+1. Selects and extracts chain A in 4OHU.pdb removing all non-protein heteroatoms (including ligands).
+2. Fixes structural issues using PDBFixer, adds hydrogens and minimizes energy 
+3. Copies final receptor to the `protein_files/` directory.
 
 **Key Outputs:**
 ```
@@ -46,11 +46,12 @@ Extracts ligand coordinates from the downloaded PDB file.
 
 **Process:**
 1. Reads the `4OHU.pdb` structure.
-2. Screens the protein for all co-crystallized ligands for the user to select; saves it as ligand_id.
-3. BIsolates selcted ligand from  PDB and saves as ligand_id variable.
+2. Screens the protein for all co-crystallized ligands and prompts user to select one.
+3. Isolates selected ligand from  PDB and saves as ligand_id variable.
 4. Exports ligand_id as `{ligand_id}.sdf` (preserving its 3D coordinates).
 5. Downloads an ideal ligand from RCSB (as {ligand_id}_ideal.sdf).
 6. Partially fixes and aligns coordinates with {ligand_id}_ideal.sdf and rearomatize {ligand_id}.sdf and saves it as {ligand_id}_corrected_pose.sdf
+7. 
 
 **Key Outputs:**
 ```
@@ -64,76 +65,46 @@ Extracts ligand coordinates from the downloaded PDB file.
 python3 ligand_extraction_and_preparation.py
 ```
 
----
-
 ### Step 4: In-Silico Screening (`in_silico_screening_and_reporting.py`)
-Performs docking of each ligand against the prepared receptor using **Gnina**.
+Performs docking of each ligand against the prepared receptor using Gnina.
 
 **Process:**
-1. Verifies Smina installation.
-2. Converts receptor to `.pdbqt` format via `prepare_receptor4.py` (MGLTools).
-3. Iterates through each `.sdf` ligand in `ligand_library/`.
-4. Runs Smina docking with parameters from `config.txt`.
-5. Extracts predicted binding affinities from docking logs.
+1. Verifies Gnina installation.
+2. Prompts user to choose docking mode and configure run parameters:
 
-**Configuration:**
-- Scoring: Vina
-- Number of modes: 4
-- Exhaustiveness: 8-80
+   **Docking mode**
+   a) single docking
+   b) batch docking
+   c) flexible docking
+   d) docking on unknown sites
+
+   **Exhaustiveness**
+   8, 16, 24, ..., 80
+   
+   **GPU usage**
+   yes/no
+
+   **Convolutional neural network (CNN) usage**
+   yes/no
+
+   If **yes** was selected, CNN score will be displayed (compute-intensive)
+   
+5. Runs Gnina docking with parameters selected above.
+6. Writes report and saves it as csv file.
 
 **Outputs:**
 ```
 docking_results/
-├── variant_name_docked.sdf
-├── variant_name_docking.log
+├── {ligand_id}_docked_{pdb_id}.sdf
+├── multiple_ligands_docked_{pdb_id}.sdf
+├── {ligand_id}_flex.sdf
+├── {ligand_id}_docked_whole_{pdb_id}.sdf
+├── docking_results_{pdb_id}.csv
 ```
 
 **Usage Example:**
 ```bash
-python3 in_silico_screening.py
-```
-
----
-
-### Step 5: Report Generation (`report.py`)
-Aggregates docking results and generates a ranked summary of ligand performance.
-
-**Process:**
-1. Parses each `*_docking.log` file to extract the top (mode 1) affinity value.
-2. Sorts ligands by binding energy (ascending order = stronger binding).
-3. Generates a human-readable report in `results/docking_ranking.txt`.
-4. Copies the top-ranked docked structure to `results/`.
-
-**Outputs:**
-```
-results/
-├── docking_ranking.txt
-├── <best_ligand>_docked.sdf
-├── 4OHU_A_NAD_fixed_with_NAD.pdb
-```
-
-**Usage Example:**
-```bash
-python3 report.py
-```
-
----
-
-## Automated Execution Scripts
-
-The workflow is organized into three shell wrappers:
-
-| Stage | Script | Description |
-|--------|---------|-------------|
-| **1. Pre-run** | `pre_run.sh` | Runs protein preparation and ligand generation. |
-| **2. Run** | `run.sh` | Performs virtual screening with Smina. |
-| **3. Post-run** | `post_run.sh` | Generates reports and rankings. |
-
-Example pipeline execution:
-```bash
-bash pre_run.sh
-bash run.sh
-bash post_run.sh
+python3 in-silico_screening_and_reporting.py
 ```
 
 ---
@@ -142,8 +113,8 @@ bash post_run.sh
 
 | Stage | Duration (Approx.) |
 |--------|--------------------|
+| Protein Chain Extraction + Preparation | ~2–4 min |
 | Ligand Extraction + Preparation | ~2–4 min |
-| Ligand Modification | ~3–5 min |
 | Docking (per ligand) | ~2–5 min |
 | Full Library (10–20 ligands) | ~1–2 hrs |
 | Report Generation | <1 min |
@@ -153,58 +124,46 @@ bash post_run.sh
 ## Output Structure
 
 ```
-workflow-002/
-├── 4OHU.pdb
-├── ligand_library/
-│   ├── *.sdf
-│   └── variants.svg
+workflow-004/
+├── 4OHU_A.pdb
+├── *.sdf
 ├── docking_results/
-│   ├── *_docked.sdf
-│   ├── *_docking.log
-├── results/
-│   ├── 4OHU_A_NAD_fixed_with_NAD.pdb
-│   ├── docking_ranking.txt
-│   ├── best_ligand_docked.sdf
-└── config.txt
+│   ├── *_docked_{pdb_id}.sdf
+│   ├── *_flex.sdf
+└── ├── *_docked_whole_{pdb_id}.sdf
 ```
-
----
-
-## Docking Result Ranking (Strongest Binding First)
-
-```
-Rank 1: Compound halogen_to_amine, Binding Energy: -10.10 kcal/mol
-Rank 2: Compound halogen_to_hydroxyl, Binding Energy: -10.10 kcal/mol
-Rank 3: Compound 2TK, Binding Energy: -9.90 kcal/mol
-Rank 4: Compound original, Binding Energy: -9.80 kcal/mol
-Rank 5: Compound hydroxyl_to_amine, Binding Energy: -9.60 kcal/mol
-Rank 6: Compound hydroxyl_to_halogen, Binding Energy: -9.10 kcal/mol
-Rank 7: Compound hydroxyl_to_thiol, Binding Energy: -8.00 kcal/mol
-```
-
-**Interpretation:**
-- Ligands with more negative binding energies exhibit stronger predicted affinity.  
-- `halogen_to_amine` and `halogen_to_hydroxyl` show the best potential as drug candidates with ≈ -10.1 kcal/mol binding energies.
 
 ---
 
 ## Dependencies
 
 Installed inside the Docker environment:
-- **Python 3.x**
+- **python 3.11**
 - **RDKit**
-- **Smina**
+- **Gnina**
 - **BioPython**
 - **OpenMM** / **PDBFixer**
-- **MGLTools (prepare_receptor4.py)**
-- **PDB2PQR**
 - **NumPy**
+- **Pandas**
+- **Scipy**
+- **MDAnalysis**
+- **Requests**
+- **Openbabel-wheel**
+- **Useful-rdkit-utils**
+- **Molscrub**
+- **Libstdcxx-ng**
 
 ---
 
 ## References
-- **Smina:** https://sourceforge.net/projects/smina/  
-- **AutoDock Vina:** Trott & Olson, *J. Comput. Chem.* 31, 455–461 (2010).  
-- **PDBFixer:** https://github.com/openmm/pdbfixer  
-- **PDB2PQR:** Dolinsky et al., *Nucleic Acids Res.*, 32, W665–W667 (2004).  
+- **PDBFixer:** https://github.com/openmm/pdbfixer
+- **MDAnalysis:** https://github.com/MDAnalysis/mdanalysis
+- **Molscrub:** https://github.com/forlilab/molscrub
+- **Openbabel-wheel:** https://github.com/njzjz/openbabel-wheel
+- **Scipy:** https://github.com/scipy/scipy
+- **Useful_rdkit_utils:** https://github.com/PatWalters/useful_rdkit_utils
+- **PDB101 tutorial by RCSB Protein Data Bank:** https://pdb101.rcsb.org/train/training-events/python4
+- **Gnina:** McNutt, A.T., Li, Y., Meli, R. et al. GNINA 1.3: the next increment in molecular docking with deep learning. J Cheminform 17, 28 (2025). https://doi.org/10.1186/s13321-025-00973-x
+
+
 
