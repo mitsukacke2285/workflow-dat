@@ -41,7 +41,7 @@ protein_files/4OHU_A.pdbqt
 python3 protein_preparation.py
 ```
 
-### Step 3: Ligand Extraction and Preparation
+### Step 3: Ligand Extraction and Preparation (`ligand_extraction_and_preparation.py`)
 Extracts ligand coordinates from the downloaded PDB file.
 
 **Process:**
@@ -140,6 +140,7 @@ Installed inside the Docker environment:
 - **AutoDock Vina:** Trott & Olson, *J. Comput. Chem.* 31, 455–461 (2010).  
 - **PDBFixer:** https://github.com/openmm/pdbfixer  
 - **PDB2PQR:** Dolinsky et al., *Nucleic Acids Res.*, 32, W665–W667 (2004).  
+
 
 
 
