@@ -10,7 +10,7 @@ from pdbfixer import PDBFixer
 from openmm.app import PDBFile, ForceField, Simulation
 from openmm import VerletIntegrator
 import openmm.unit as unit
-from openbabel import openbabel
+#from openbabel import openbabel
 import openbabel.pybel as pybel
 
 def select_chain(pdb_file):
