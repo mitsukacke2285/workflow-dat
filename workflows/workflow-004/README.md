@@ -111,14 +111,27 @@ python3 in_silico_screening.py
 ## Dependencies
 
 Installed inside the Docker environment:
-- **Python 3.x**
+- **Python => 3.11**
 - **RDKit**
-- **Smina**
+- **Gnina**
 - **BioPython**
 - **OpenMM** / **PDBFixer**
 - **MGLTools (prepare_receptor4.py)**
 - **PDB2PQR**
 - **NumPy**
+
+    numpy \
+    pandas \
+    scipy \
+    biopython \
+    openmm \
+    mdanalysis \
+    rdkit \
+    requests \
+    pdbfixer \
+    openbabel \
+    libstdcxx-ng \
+    && conda clean -afy
 
 ---
 
@@ -127,5 +140,6 @@ Installed inside the Docker environment:
 - **AutoDock Vina:** Trott & Olson, *J. Comput. Chem.* 31, 455–461 (2010).  
 - **PDBFixer:** https://github.com/openmm/pdbfixer  
 - **PDB2PQR:** Dolinsky et al., *Nucleic Acids Res.*, 32, W665–W667 (2004).  
+
 
 
