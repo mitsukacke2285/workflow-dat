@@ -71,10 +71,7 @@ Performs docking of each ligand against the prepared receptor using **Gnina**.
 
 **Process:**
 1. Verifies Gnina installation.
-2. Converts receptor to `.pdbqt` format via `prepare_receptor4.py` (MGLTools).
-3. Iterates through each `.sdf` ligand in `ligand_library/`.
-4. Runs Smina docking with parameters from `config.txt`.
-5. Extracts predicted binding affinities from docking logs.
+2. Prompts user to select docking mode.
 
 **Configuration:**
 - Scoring: Vina
@@ -140,6 +137,7 @@ Installed inside the Docker environment:
 - **AutoDock Vina:** Trott & Olson, *J. Comput. Chem.* 31, 455–461 (2010).  
 - **PDBFixer:** https://github.com/openmm/pdbfixer  
 - **PDB2PQR:** Dolinsky et al., *Nucleic Acids Res.*, 32, W665–W667 (2004).  
+
 
 
 
