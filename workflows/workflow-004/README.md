@@ -109,34 +109,25 @@ python3 in_silico_screening.py
 
 Installed inside the Docker environment:
 - **Python => 3.11**
+- **Numpy**
+- **Requests**
+- **Pandas**
+- **Scipy**
 - **RDKit**
 - **Gnina**
 - **BioPython**
 - **OpenMM** / **PDBFixer**
-- **MGLTools (prepare_receptor4.py)**
-- **PDB2PQR**
-- **NumPy**
-
-    numpy \
-    pandas \
-    scipy \
-    biopython \
-    openmm \
-    mdanalysis \
-    rdkit \
-    requests \
-    pdbfixer \
-    openbabel \
-    libstdcxx-ng \
-    && conda clean -afy
+- **MDAnalysis**
 
 ---
 
 ## References
-- **Smina:** https://sourceforge.net/projects/smina/  
-- **AutoDock Vina:** Trott & Olson, *J. Comput. Chem.* 31, 455–461 (2010).  
+- **PDB101 tutorial:** by RCSB Protein Data Bank: https://pdb101.rcsb.org/train/training-events/python4
+- **Gnina:** McNutt, A.T., Li, Y., Meli, R. et al. GNINA 1.3: the next increment in molecular docking with deep learning. J Cheminform 17, 28 (2025). https://doi.org/10.1186/s13321-025-00973-x
+- Buccheri, R.; Rescifina, A. High-Throughput, High-Quality: Benchmarking GNINA and AutoDock Vina for Precision Virtual Screening Workflow. Molecules 2025, 30, 3361. https://doi.org/10.3390/molecules30163361
+- Sunseri, J., & Koes, D. R. (2021). Virtual Screening with Gnina 1.0. Molecules (Basel, Switzerland), 26(23), 7369. https://doi.org/10.3390/molecules26237369
 - **PDBFixer:** https://github.com/openmm/pdbfixer  
-- **PDB2PQR:** Dolinsky et al., *Nucleic Acids Res.*, 32, W665–W667 (2004).  
+
 
 
 
